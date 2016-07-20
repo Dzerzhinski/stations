@@ -1,3 +1,6 @@
+import locale 
+locale.setlocale(locale.LC_ALL, '') 
+
 """Matrix of edges i.e. the distances of routes between bus stops.  They 
     follow this key: 
             1  ::  Montlake Station
@@ -16,6 +19,22 @@
             14 ::  West Viewmont Way W + W Bertona St
             15 ::  W Nickerson St + 6th Ave W 
     Repeat entries are replaced with zeroes for convenience."""
+    
+STATIONS = ["Montlake Station", \
+                "Green Lake Park and Ride", \
+                "Northgate Transit Center", \
+                "Beacon Hill Station", \
+                "Columbia City Station", \
+                "Rainier Beach Station", \
+                "University of Washington Station", \
+                "NW 54th and 30th", \
+                "63rd Ave SW and SW Admiral Way", \
+                "Capitol Hill Station", \
+                "International District Station", \
+                "Westlake Station", \
+                "Denny Way and 2nd Ave", \
+                "West Viewmont Way W and Bertona St", 
+                "W Nickerson St and 6th Ave W"]
 EDGE_LENGTHS = [ \
                 [0, 2.8, 4.9, 5.4, 6.5, 9.9, 10.5, 5.5, 10.2, 2.8, 4.5, 3.8, 4.3, 6.4, 3.8], \
                 [0, 0, 2.0, 7.1, 8.6, 11.3, 2.4, 4.3, 12.2, 4.1, 5.9, 4.8, 5.1, 5.7, 3.9], \
@@ -39,6 +58,9 @@ RATIO = 7
 # Dimensions of the array of edges
 COLUMNS = 15
 ROWS = 15
+
+# cost per mile of adding bike lanes
+COST_PER_MILE = 10000
 
 def convertEdgeArray(): 
     """Convert a matrix of edges to an indexed list of edges.
@@ -294,20 +316,47 @@ def calcMileage(graph, edge_table, addl_edge = None):
     return mileage
     
 def addBranches(graph, edge_table, branches, threshold): 
+    """Add branches to tree as is cost-effective. 
+    
+        Assuming that the graph is minimally spanning, this function examines 
+        unused edges and adds them to the graph.  It does so iteratively, 
+        first adding the edge that has the most gain to the cost-benefit 
+        analysis, and ending when it cannot find an edge whose cost-benefit 
+        ratio that exceeds the parameter threshold.  The graph to which 
+        branches are added is passed by reference in parameter graph, the 
+        indexed list of edge lengths is passed in parameter edge_table, the 
+        list of edges that compose the graph is passed by reference in 
+        parameter branches.  It is dependent upon the calcMileage function."""
     expand = True 
+    # build list of unused edges
     unused = [i for i in range(len(edge_table)) if i not in branches] 
+    # iterate until there is no cost-benefit advantage to adding additional 
+    # branches
     while(expand): 
+        # calculate rider-miles of graph in its current state 
         base_miles = calcMileage(graph, edge_table) 
+        # initialize variables
         new_miles = list()
         cba_ratio = list() 
+        # index of edge within list of unused edges with highest advantage
+        # note: the indexed element is itself an index to edge_table 
         high_idx = 0
+        # iterate over unused edges
         for i in range(len(unused)): 
+            # error/debug handling
             if(i > len(edge_table)): 
                 print("Oh shit I'm out of bounds!") 
-            new_miles.append(calcMileage(graph, edge_table, unused[i]))
+            # calculate rider-mile total of graph with this edge 
+            new_miles.append(calcMileage(graph, edge_table, unused[i])) 
+            # calculate advantage of adding this edge: 
+            # advantage is ratio of difference in total rider-miles by adding 
+            # new edge over length (cost) of new edge
             cba_ratio.append((base_miles - new_miles[i]) / edge_table[unused[i]])
+            # test advantage             
             if(cba_ratio[i] > cba_ratio[high_idx]): 
                 high_idx = i
+        # add the edge that gives the most benefit to tree, providing it meets 
+        # the threshold of cost-benefit advantage 
         if(cba_ratio[high_idx] > threshold): 
             # add branch to graph 
             branches.add(unused[high_idx]) 
@@ -315,20 +364,58 @@ def addBranches(graph, edge_table, branches, threshold):
             graph[v_list[0]].append(v_list[1]) 
             graph[v_list[1]].append(v_list[0]) 
             unused.pop(high_idx) 
+        # end iteration 
         else: 
             expand = False 
 
+def printGraph(graph): 
+    """Print graph.
+    
+        Prints the graph with each station listing its adjacent stations.  
+        Takes graph (by reference) as parameter."""
+    for stn in range(len(graph)): 
+        str_routes = str(STATIONS[stn]) + " => "
+        if(len(graph[stn]) > 0): 
+            for adj in graph[stn][:-1]:  
+                str_routes += str(STATIONS[adj]) + ", "
+            str_routes += str(STATIONS[graph[stn][-1]]) 
+        print(str_routes) 
+        
+def sumEdges(tree, edge_table): 
+    """Sum the weight of edges in a tree.
+    
+        Helper function to calculate total weight of all edges in the graph.  
+        Takes the tree to be summed and a table of edge weights as 
+        parameters.  Returns the total weight.  In this case, the "weight" of 
+        edges correspond to the length of the routes they represent."""
+    ttl = 0
+    for edge in tree: 
+        ttl += edge_table[edge] 
+    return ttl
+
 def main(): 
+    """Execute algorithm generate trees.
+    
+        Overall process managed through main function for convenience."""
+    # convert matrix of edge lengths to indexed list 
     edge_table = convertEdgeArray() 
     
-    # generate graph without edges 
+    # generate graph without edges
+    # each element index corresponds to a node.  Each element is a list of 
+    # nodes adjacent to the indexed node.  Initialied to nodes without edges 
     graph = list()
     for i in range(COLUMNS): 
         graph.append(list()) 
     
+    # generate minimum spanning tree solution 
     tree_set = buildMST(graph, edge_table) 
-    print(graph) 
-    print(calcMileage(graph, edge_table)) 
+    print("Minimum Spanning Tree: ") 
+    printGraph(graph) 
+    length_mst = sumEdges(tree_set, edge_table) 
+    print("Total length of all routes: {0:2f} miles".format(length_mst)) 
+    print("Total cost of plan: {}".format( \
+                    locale.currency((COST_PER_MILE * length_mst), \
+                    grouping = True)))
     
     # Assuming that populations and traffic are evenly distributed across the 
     # city, such that there are equal numbers of riders originating from 
@@ -344,10 +431,14 @@ def main():
     # by the cost of the network, and provided this ratio is above fourteen, 
     # it is a cost-effective improvement.  
     addBranches(graph, edge_table, tree_set, RATIO)    
-    num_rte = str(len(tree_set))
-    print(graph) 
-    print(calcMileage(graph, edge_table)) 
-    
+    print("Advantageous Tree: ") 
+    printGraph(graph) 
+    length_addl = sumEdges(tree_set, edge_table) 
+    print("Total length of all routes: {0:2f} miles".format(length_addl)) 
+    print("Total cost of plan: {}".format( \
+                    locale.currency((COST_PER_MILE * length_addl), \
+                    grouping = True)))
+
 main() 
 
 foo = getCoord(90)
