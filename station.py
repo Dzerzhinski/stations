@@ -36,11 +36,11 @@ STATIONS = ["Montlake Station", \
                 "West Viewmont Way W and Bertona St", 
                 "W Nickerson St and 6th Ave W"]
 EDGE_LENGTHS = [ \
-                [0, 2.8, 4.9, 5.4, 6.5, 9.9, 10.5, 5.5, 10.2, 2.8, 4.5, 3.8, 4.3, 6.4, 3.8], \
-                [0, 0, 2.0, 7.1, 8.6, 11.3, 2.4, 4.3, 12.2, 4.1, 5.9, 4.8, 5.1, 5.7, 3.9], \
-                [0, 0, 0, 9.2, 10.6, 13.4, 4.4, 5.3, 14.3, 6.2, 7.9, 7.3, 7.5, 8.3, 5.7], \
-                [0, 0, 0, 0, 2.0, 4.6, 5.7, 8.3, 6.6, 2.9, 1.7, 3.0, 3.9, 8.7, 6.8], \
-                [0, 0, 0, 0, 0, 2.6, 6.8, 11.0, 8.1, 5.0, 3.7, 4.7, 5.7, 10.6, 8.3], \
+                [0,  2.8,  4.9,  5.4,  6.5,  9.9, 10.5,  5.5, 10.2,  2.8,  4.5,  3.8,  4.3, 6.4, 3.8], \
+                [0,    0,  2.0,  7.1,  8.6, 11.3,  2.4,  4.3, 12.2,  4.1,  5.9,  4.8,  5.1, 5.7, 3.9], \
+                [0,    0,    0,  9.2, 10.6, 13.4,  4.4,  5.3, 14.3,  6.2,  7.9,  7.3,  7.5, 8.3, 5.7], \
+                [0,    0,    0,    0,  2.0,  4.6,  5.7,  8.3,  6.6,  2.9,  1.7,  3.0,  3.9, 8.7, 6.8], \
+                [0,    0,    0,    0,    0,  2.6,  6.8, 11.0,  8.1,  5.0, 3.7, 4.7, 5.7, 10.6, 8.3], \
                 [0, 0, 0, 0, 0, 0, 10.2, 13.2, 9.5, 7.5, 6.4, 7.5, 8.4, 13.4, 11.5], \
                 [0, 0, 0, 0, 0, 0, 0, 5.1, 11.8, 3.2, 5.3, 4.3, 4.9, 6.1, 3.8], \
                 [0, 0, 0, 0, 0, 0, 0, 0, 12.8, 6.1, 6.9, 5.7, 5.6, 4.2, 2.7], \
@@ -77,19 +77,25 @@ def convertEdgeArray():
             edges_list.append(EDGE_LENGTHS[i][j])
     return edges_list 
 
-def getIndex(row, column):
-    """Get index from row and column. 
-    
-        Taking the row and column of an element of the matrix of edges, it 
-        returns the corresponding index of the edge from the list of edges.
-        """
-    index = 0
-    if(row > 0):
-        for i in range((row - 1)): 
-            index += COLUMNS - i - 1
-    index += column - row - 1
-    return index
-    
+#def getIndex(row, column):
+#    """Get index from row and column. 
+#    
+#        Taking the row and column of an element of the matrix of edges, it 
+#        returns the corresponding index of the edge from the list of edges.
+#        """
+#    if(row > column): 
+#        r = column
+#        c = row
+#    else: 
+#        r = row
+#        c = column
+#    index = 0
+#    if(r > 0):
+#        for i in range(r): 
+#            index += COLUMNS - i - 2
+#    index += c - r - 1
+#    return index
+#    
 def getCoord(index):
     """Get coordinates from index.
     
@@ -108,19 +114,19 @@ def getCoord(index):
     col = index + 1 + row
     return row, col
     
-def getEdgeLength(v1, v2, edges):
-    """Get length of an edge from its coordinates.
-    
-        I don't know why this would be useful.  It takes two vertices 
-        (stations) and a list of edges as parameters, and returns the element 
-        of the list, and edge, that corresponds to those two vertices."""
-    # Row cannot be higher than the columns, based on the triangular nature 
-    # of the matrix.
-    if(v2 < v1): 
-        temp = v1
-        v1 = v2
-        v2 = temp
-    return edges[getIndex(v1, v2)] 
+#def getEdgeLength(v1, v2, edges):
+#    """Get length of an edge from its coordinates.
+#    
+#        I don't know why this would be useful.  It takes two vertices 
+#        (stations) and a list of edges as parameters, and returns the element 
+#        of the list, and edge, that corresponds to those two vertices."""
+#    # Row cannot be higher than the columns, based on the triangular nature 
+#    # of the matrix.
+#    if(v2 < v1): 
+#        temp = v1
+#        v1 = v2
+#        v2 = temp
+#    return edges[getIndex(v1, v2)] 
 
 def sortedEdges(edges_list, edge_table):
     """Sort list of edges.
@@ -262,7 +268,7 @@ def findPathLength(graph, edge_list, start, dest):
         for i in graph[current]: 
             if(i in visited): 
                 table[i] = table[current] + \
-                    getEdgeLength(i, current, edge_list)
+                    getEdge(i, current)
         # update visited list
         visited.remove(current) 
         if(len(visited) < 1): 
@@ -368,7 +374,16 @@ def addBranches(graph, edge_table, branches, threshold):
         else: 
             expand = False 
 
-def printGraph(graph): 
+def getEdge(n1, n2): 
+    if(n1 > n2): 
+        row = n2
+        column = n1
+    else: 
+        row = n1
+        column = n2
+    return EDGE_LENGTHS[row][column]
+
+def printGraph(graph, edge_table): 
     """Print graph.
     
         Prints the graph with each station listing its adjacent stations.  
@@ -377,8 +392,10 @@ def printGraph(graph):
         str_routes = str(STATIONS[stn]) + " => "
         if(len(graph[stn]) > 0): 
             for adj in graph[stn][:-1]:  
-                str_routes += str(STATIONS[adj]) + ", "
-            str_routes += str(STATIONS[graph[stn][-1]]) 
+                str_routes += str(STATIONS[adj]) + \
+                        " ({0}), ".format(getEdge(stn, adj))
+            str_routes += str(STATIONS[graph[stn][-1]]) + \
+                            " ({0})".format(getEdge(stn, graph[stn][-1]))
         print(str_routes) 
         
 def sumEdges(tree, edge_table): 
@@ -409,10 +426,11 @@ def main():
     
     # generate minimum spanning tree solution 
     tree_set = buildMST(graph, edge_table) 
+    tree_str = str(tree_set)
     print("Minimum Spanning Tree: ") 
-    printGraph(graph) 
+    printGraph(graph, edge_table) 
     length_mst = sumEdges(tree_set, edge_table) 
-    print("Total length of all routes: {0:2f} miles".format(length_mst)) 
+    print("Total length of all routes: {0:.2f} miles".format(length_mst)) 
     print("Total cost of plan: {}".format( \
                     locale.currency((COST_PER_MILE * length_mst), \
                     grouping = True)))
@@ -432,9 +450,9 @@ def main():
     # it is a cost-effective improvement.  
     addBranches(graph, edge_table, tree_set, RATIO)    
     print("Advantageous Tree: ") 
-    printGraph(graph) 
+    printGraph(graph, edge_table) 
     length_addl = sumEdges(tree_set, edge_table) 
-    print("Total length of all routes: {0:2f} miles".format(length_addl)) 
+    print("Total length of all routes: {0:.2f} miles".format(length_addl)) 
     print("Total cost of plan: {}".format( \
                     locale.currency((COST_PER_MILE * length_addl), \
                     grouping = True)))
