@@ -477,12 +477,19 @@ def main():
     tree_set = buildMST(graph, edge_table) 
     tree_str = str(tree_set)
     print("Minimum Spanning Tree: ") 
-    printGraph(graph, edge_table) 
+    # printGraph(graph, edge_table) 
     length_mst = sumEdges(tree_set, edge_table) 
-    print("Total length of all routes: {0:.2f} miles".format(length_mst)) 
-    print("Total cost of plan: {}".format( \
-                    locale.currency((COST_PER_MILE * length_mst), \
-                    grouping = True)))
+    # print("Total length of all routes: {0:.2f} miles".format(length_mst)) 
+#    print("Total cost of plan: {}".format( \
+#                    locale.currency((COST_PER_MILE * length_mst), \
+#                    grouping = True)))
+#                    
+    for row in range(len(graph)): 
+        line = str(row + 1) + " & " + STATIONS_SHORT[row]  
+        line = line + " & " + STATIONS_SHORT[graph[row][0]] 
+        for col in graph[row][1:]: 
+            line = line + ", " + STATIONS_SHORT[col]
+        print(line + " \\\\") 
                     
     # draw using NetworkX 
     g = nx.Graph() 
@@ -496,8 +503,8 @@ def main():
                 g.add_edge(v, a) 
     g_pos = normStationPos(STATIONS_POS) 
     nx.draw(g, pos = g_pos, labels = g_labels)
-    plt.savefig("mst.png")    
-    plt.show()
+    # plt.savefig("mst.png")    
+    # plt.show()
     
     # Assuming that populations and traffic are evenly distributed across the 
     # city, such that there are equal numbers of riders originating from 
@@ -514,13 +521,13 @@ def main():
     # it is a cost-effective improvement.  
     addBranches(graph, edge_table, tree_set, RATIO)    
     print("Advantageous Tree: ") 
-    printGraph(graph, edge_table) 
+    # printGraph(graph, edge_table) 
     length_addl = sumEdges(tree_set, edge_table) 
-    print("Total length of all routes: {0:.2f} miles".format(length_addl)) 
-    print("Total cost of plan: {}".format( \
-                    locale.currency((COST_PER_MILE * length_addl), \
-                    grouping = True)))
-    # draw using NetworkX 
+    # print("Total length of all routes: {0:.2f} miles".format(length_addl)) 
+    #print("Total cost of plan: {}".format( \
+#                    locale.currency((COST_PER_MILE * length_addl), \
+#                    grouping = True)))
+#    # draw using NetworkX 
     g = nx.Graph() 
     g_labels = {} 
     for i in range(COLUMNS): 
@@ -532,8 +539,8 @@ def main():
                 g.add_edge(v, a) 
     g_pos = normStationPos(STATIONS_POS) 
     nx.draw(g, pos = g_pos, labels = g_labels)
-    plt.savefig("full.png")    
-    plt.show()
+    # plt.savefig("full.png")    
+    # plt.show()
 
 
 main() 
@@ -541,11 +548,12 @@ main()
 foo = getCoord(90)
 bar = getCoord(0)
     
-for i in range(len(EDGE_LENGTHS)): 
-    line = str(i + 1)
-    for j in range(len(EDGE_LENGTHS[i])): 
-        line += " & " + str(EDGE_LENGTHS[i][j]) 
-    line += " \\\\"
-    print(line) 
+#for i in range(len(EDGE_LENGTHS)): 
+#    line = str(i + 1)
+#    for j in range(len(EDGE_LENGTHS[i])): 
+#        line += " & " + str(EDGE_LENGTHS[i][j]) 
+#    line += " \\\\"
+#    print(line) 
 
-    
+#for i in range(len(STATIONS)): 
+#    print(str(i + 1) + " & " + STATIONS[i] + " \\\\")

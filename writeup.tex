@@ -5,6 +5,9 @@
 
 \usepackage{fancyvrb}
 \usepackage{amsmath}
+\usepackage{multirow} 
+\usepackage{eqparbox}
+\usepackage{booktabs} 
 
 \begin{document}
 
@@ -192,6 +195,35 @@ Following this model, an optimized system of bike lanes was determined that expa
 \section{Mathematical Solution} 
 
 \begin{table}[!hbp] 
+    \center 
+    \begin{tabular}{ r  l } 
+        \toprule 
+        \multicolumn{1}{ c}{\eqparbox{stat_idx}{Station \\ Index}} & \multicolumn{1}{ c }{Station} \\
+        \midrule
+        1 & Montlake Station \\
+        2 & Green Lake Park and Ride \\
+        3 & Northgate Transit Center \\
+        4 & Beacon Hill Station \\
+        5 & Columbia City Station \\
+        6 & Rainier Beach Station \\
+        7 & University of Washington Station \\
+        8 & NW 54th and 30th \\
+        9 & 63rd Ave SW and SW Admiral Way \\
+        10 & Capitol Hill Station \\
+        11 & International District Station \\
+        12 & Westlake Station \\
+        13 & Denny Way and 2nd Ave \\
+        14 & West Viewmont Way W and Bertona St \\
+        15 & W Nickerson St and 6th Ave W \\
+        \bottomrule 
+    \end{tabular} 
+    \caption[Station Index]{List of stations by index} 
+    \label{station_idx} 
+\end{table} 
+        
+        
+
+\begin{table}[!hbp] 
     \begin{tabular}{l | *{15}{r}} 
         \multicolumn{1}{c}{Station} & \multicolumn{15}{c}{Station Index} \\
         \multicolumn{1}{c |}{Index}   & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\
@@ -212,6 +244,29 @@ Following this model, an optimized system of bike lanes was determined that expa
         14 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3.2 \\
         15 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
     \end{tabular} 
+    \caption[Distance Matrix]{Variant of distance matrix used.  Each element represents the distance of the direct route between the two stations, indexed by row and column.  Elements representing reflexive routes (from a station to itself) or repeated stations are represented by zero, for convenience in coding.} 
+    \label{distance_matrix} 
 \end{table} 
 
+\begin{table}[!hbp] 
+    \begin{tabular}{r l l} 
+    \toprule 
+        1 & Montlake & Capitol Hill, Greenlake \\
+        2 & Greenlake & Northgate, UW, Montlake \\
+        3 & Northgate & Greenlake \\
+        4 & Beacon Hill & I District, Columbia City \\
+        5 & Columbia City & Beacon Hill, Rainier Beach \\
+        6 & Rainier Beach & Columbia City \\
+        7 & UW & Greenlake \\
+        8 & Ballard & N Queen Anne \\
+        9 & West Seattle & I District \\
+        10 & Capitol Hill & Westlake, Montlake \\
+        11 & I District & Westlake, Beacon Hill, West Seattle \\
+        12 & Westlake & Lower Queen Anne, I District, Capitol Hill \\
+        13 & Lower Queen Anne & Westlake, N Queen Anne \\
+        14 & Magnolia & N Queen Anne \\
+        15 & N Queen Anne & Ballard, Magnolia, Lower Queen Anne \\
+    \bottomrule
+    \end{tabular} 
+\end{table} 
 \end{document} 
