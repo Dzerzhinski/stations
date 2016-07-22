@@ -1,4 +1,6 @@
 import locale 
+import networkx as nx
+import matplotlib.pyplot as plt 
 locale.setlocale(locale.LC_ALL, '') 
 
 """Matrix of edges i.e. the distances of routes between bus stops.  They 
@@ -19,6 +21,38 @@ locale.setlocale(locale.LC_ALL, '')
             14 ::  West Viewmont Way W + W Bertona St
             15 ::  W Nickerson St + 6th Ave W 
     Repeat entries are replaced with zeroes for convenience."""
+    
+STATIONS_SHORT = ["Montlake", \
+                    "Greenlake", \
+                    "Northgate", \
+                    "Beacon Hill", \
+                    "Columbia City", \
+                    "Rainier Beach", \
+                    "UW", \
+                    "Ballard", \
+                    "West Seattle", \
+                    "Capitol Hill", \
+                    "I District", \
+                    "Westlake", \
+                    "Lower Queen Anne", \
+                    "Magnolia", \
+                    "N Queen Anne"]
+                    
+STATIONS_POS = [(47.644766, -122.302764), \
+                    (47.676527, -122.320804), \
+                    (47.702234, -122.327502), \
+                    (47.579491, -122.311751), \
+                    (47.559884, -122.292623), \
+                    (47.522491, -122.279673), \
+                    (47.649796, -122.303808), \
+                    (47.668685, -122.394782), \
+                    (47.576149, -122.413351), \
+                    (47.619921, -122.320346), \
+                    (47.598317, -122.328144), \
+                    (47.611644, -122.337146), \
+                    (47.618822, -122.353437), \
+                    (47.650616, -122.409524), \
+                    (47.651807, -122.364491)]
     
 STATIONS = ["Montlake Station", \
                 "Green Lake Park and Ride", \
@@ -61,6 +95,21 @@ ROWS = 15
 
 # cost per mile of adding bike lanes
 COST_PER_MILE = 10000
+
+def normStationPos(station_list): 
+    lat_avg = 0
+    long_avg = 0
+    for i in station_list: 
+        lat_avg += i[0] 
+        long_avg += i[1] 
+    lat_avg = lat_avg / len(station_list) 
+    long_avg = long_avg / len(station_list) 
+    norm_list = []
+    for i in station_list: 
+        lat = i[0] - lat_avg
+        long = i[1] - long_avg
+        norm_list.append((long, lat)) 
+    return norm_list
 
 def convertEdgeArray(): 
     """Convert a matrix of edges to an indexed list of edges.
@@ -434,6 +483,21 @@ def main():
     print("Total cost of plan: {}".format( \
                     locale.currency((COST_PER_MILE * length_mst), \
                     grouping = True)))
+                    
+    # draw using NetworkX 
+    g = nx.Graph() 
+    g_labels = {} 
+    for i in range(COLUMNS): 
+        g.add_node(i, name = STATIONS_SHORT[i])
+        g_labels[i] = STATIONS_SHORT[i]
+    for v in range(len(graph)): 
+        for a in graph[v]: 
+            if(a > v): 
+                g.add_edge(v, a) 
+    g_pos = normStationPos(STATIONS_POS) 
+    nx.draw(g, pos = g_pos, labels = g_labels)
+    plt.savefig("mst.png")    
+    plt.show()
     
     # Assuming that populations and traffic are evenly distributed across the 
     # city, such that there are equal numbers of riders originating from 
@@ -456,11 +520,32 @@ def main():
     print("Total cost of plan: {}".format( \
                     locale.currency((COST_PER_MILE * length_addl), \
                     grouping = True)))
+    # draw using NetworkX 
+    g = nx.Graph() 
+    g_labels = {} 
+    for i in range(COLUMNS): 
+        g.add_node(i, name = STATIONS_SHORT[i])
+        g_labels[i] = STATIONS_SHORT[i]
+    for v in range(len(graph)): 
+        for a in graph[v]: 
+            if(a > v): 
+                g.add_edge(v, a) 
+    g_pos = normStationPos(STATIONS_POS) 
+    nx.draw(g, pos = g_pos, labels = g_labels)
+    plt.savefig("full.png")    
+    plt.show()
+
 
 main() 
 
 foo = getCoord(90)
 bar = getCoord(0)
     
+for i in range(len(EDGE_LENGTHS)): 
+    line = str(i + 1)
+    for j in range(len(EDGE_LENGTHS[i])): 
+        line += " & " + str(EDGE_LENGTHS[i][j]) 
+    line += " \\\\"
+    print(line) 
 
     

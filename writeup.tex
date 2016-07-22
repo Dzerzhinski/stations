@@ -1,30 +1,217 @@
+\documentclass{article}
+ 
+\author{John Bush}
+\title{Project 1} 
+
 \usepackage{fancyvrb}
+\usepackage{amsmath}
 
 \begin{document}
 
 \section{Mathematical Model} 
 
-The system of stations linked by bike paths is considered as a network graph, where the stations are represented by nodes.  The bike paths linking them are considered as weighted edges, with the weight corresponding to their length or cost, which are directly proportional.  To have the greatest efficiency, the sum of weights of edges should be as low as possible while the benefits of the system of bike paths should be as high as possible.  Reconciling these objectives is the goal of the model.
+The system of stations linked by bike paths is considered as a network graph, where the stations are represented by nodes.  The bike paths linking them are considered as weighted edges, with the weight corresponding to their length or cost, which are directly proportional.  Througout the discussion of the model, stations and routes may be considered equivalent to vertices and edges, respectively.  To have the greatest efficiency, the sum of weights of edges should be as low as possible while the benefits of the system of bike paths should be as high as possible.  Reconciling these objectives is the goal of the model.
 
-For computation, a distance matrix (Figure~/ref{distance_matrix}) was constructed, indexed by station, where each element was the distance of the optimal route between the two stations.  As it is a symmetrical matrix, if a route was identical to that of a previous row (e.g. element $(j, i)$ following $(i, j)$) it was omitted as represted by zero in the figure.  This was converted to one-dimensional list for convenience in programming.  Optimal routes were found using Google Maps, with the caveat that optimal routes were not always the shortest route by linear distance, but often took factors such as elevation changes into account.  This was considered to be optimal for the circumstances.  The graph itself was programmed as a list indexed by The coding is shown in Figure~\ref{code1}.
+For computation, a distance matrix (Figure~\ref{distance_matrix}) was constructed, indexed by station, where each element was the distance of the optimal route between the two stations.  As it is a symmetrical matrix, if a route was identical to that of a previous row (e.g. element $(j, i)$ following $(i, j)$) it was omitted as represted by zero in the figure.  This was converted to one-dimensional list for convenience in programming.  Optimal routes were found using Google Maps, with the caveat that optimal routes were not always the shortest route by linear distance, but often took factors such as elevation changes into account.  This was considered to be optimal for the circumstances.  It should also be noted that the routes occasionally overlap as roads are bottlenecked by bridges and other geographic features.  Factoring this into the programming was beyond the scope of the system currently available and was ignored as being largely inconsequential to the ultimate solution, but this does mean that the overall cost of the project may be an overestimation.  The graph itself was programmed as a list indexed by vertex, with each element begin a list of adjacent stations.  These were initialized as empty lists.  The set of edges that were included in the graph, which held the index by which the edges were referenced in the list representation of the distance matrix, which was a convenience for programming.  The coding is shown in Figure~\ref{code1}.
 
 \begin{figure}[!hbp]
-	\begin{Verbatim}[frame=single] 
-	DISTANCE_MATRIX = [[0, r0,1, r0,2, r0,3, r0,4, . . . , r0,14], 
-					   [0,    0, r1,2, r1,3, r1,4, . . . , r1,14], 
-					   [0,    0,    0, r2,3, r2,4, . . . , r2,14], 
-					   . . . 
-					   [0,    0,    0,    0,  . . . ,  0, r13,14], 
-					   [0,    0,    0,    0,  . . . ,  0,      0]]
-					   
-	EDGE_LIST => {
-		iterate over rows: 
-			iterate over columns: 
-				append element of DISTANCE_MATRIX to list
-		}
-	\end{Verbatim} 
-	\caption[Programming edge data]{Psudocode representing how the edge data was programmed into the computer model.}
-	\label{code1} 
-	\end{figure} 	
+    \begin{Verbatim}[frame=single] 
+STATIONS = 15 
+DISTANCE_MATRIX[] = [[0, r0,1, r0,2, r0,3, r0,4, . . . , r0,14], 
+                     [0,    0, r1,2, r1,3, r1,4, . . . , r1,14], 
+                     [0,    0,    0, r2,3, r2,4, . . . , r2,14], 
+                     . . . 
+                     [0,    0,    0,    0,  . . . ,  0, r13,14], 
+                     [0,    0,    0,    0,  . . . ,  0,      0]]
+       
+EDGE_LIST[] => {
+    iterate over rows: 
+        iterate over columns: 
+            append element of DISTANCE_MATRIX to list
+    }
+    
+GRAPH[] = [[], 
+           [], 
+           ...
+           []]
 
-It is stipulated that all bus stops must be served by the system of bike paths, and so the graph must be spanning.  Likewise, it is not necessary that every two stations have a distinct, unique bike lane serving them, and so it is not necessary that the graph be complete.  So the ideal graph should be a subset of the complete graph, and a minimum spanning tree would be a subset of the ideal graph.
+GRAPH_EDGES[] = []
+    \end{Verbatim} 
+    \caption[Programming edge data]{Psudocode representing how the edge data was programmed into the computer model.}
+    \label{code1} 
+    \end{figure}    
+
+It is stipulated that all bus stops must be served by the system of bike paths, and so the graph must be spanning.  Likewise, it is not necessary that every two stations have a distinct, unique bike lane serving them, and so it is not necessary that the graph be complete.  So the ideal graph, for greatest efficiency, should be a subset of the complete graph, and a minimum spanning tree would be a subset of the ideal graph.  Accordingly, the first step taken was to construct a minimal spanning tree as the minimal solution.
+
+The minimal spanning tree was constructed using Kruskal's algorithm.  It is taken as fact that for a graph of $V$ vertices, there must be $V - 1$ edges for the graph to be spanning.  The edges were placed into a list sorted by weight, and the following was completed iteratively until the graph included the required number of edges.
+    \begin{itemize} 
+    \item The least edge (i.e. shortest route) was considered.  If adding it to the graph did not complete a circuit, it was so added.  It was otherwise discarded.  It was tested for a circuit by the vertices of the new edge, $v_1$ and $v_2$.  Starting from $v_1$:
+        \begin{itemize}
+        \item All of its adjacent vertices are examined.  If one of the adjacent vertices is $v_2$, a circuit is completed and the edge should not be added.  
+        \item If there are no other adjacent vertices, there is no circuit along this branch.
+        \item If adjacent vertices that are not $v_2$ exist, this algorithm recurses on each of these vertices.  It should be noted that this recursion will not execute as many times as there are vertices in the graph, so there should be no performance concerns.
+        \end{itemize}
+    \item If the graph has the required number of edges, it is minimally spanning.  If it has fewer, this process should continue to iterate.
+    \end{itemize}
+The programming of this algorithm is considered in Figure~\ref{code2}.
+
+\begin{figure}[!hbp] 
+    \begin{Verbatim}[frame=single] 
+SORTED_EDGES[] = [pointers to the elements of EDGE_LIST, from greatest to least] 
+while(length of GRAPH_EDGES[] < STATIONS - 1) {
+    NEW_EDGE = pop from SORTED_EDGES[]
+    V1, V2 = vertices of NEW_EDGE 
+    if not => {
+        /* recursive search for circuit */
+        define function Trace(FROM, CURRENT) {
+            if {
+                /* circuit found */
+                V2 is in GRAPH[TO][] return True
+            } else if {
+                /* end of branch */
+                length(GRAPH[TO][] - FROM) == 0 return False
+            } else {
+                /* recurse along branches */
+                RESULT = True 
+                for VERTEX in (GRAPH[TO][] - FROM) {
+                    RESULT = RESULT and Trance(CURRENT, VERTEXT)
+                }
+                return RESULT 
+            }
+        }
+        /* begin recursive function */
+        return Trace(Null, V1)
+    } then {
+        to GRAPH_EDGES add NEW_EDGE 
+        to GRAPH[V1] add [V2] 
+        to GRAPH[V2] add [V1] 
+    }  else pass 
+}
+    \end{Vertbatim} 
+    \caption[Programming Minimal Spanning Tree]{Pseudocode representing how the minimmally spanning tree was generated using Kreskal's algorithm.} 
+    \label{code2} 
+\end{figure} 
+
+The minimal spanning tree is an efficient solution that satisfies the criteria.  This doesn't necessarily indicate that this is an optimal solution.  For example, the minimal spanning tree produced would require a rider traveling from Northgate to Ballard to detour through Queen Anne, which is obviously inefficient.  To attempt to improve upon the solution, a second set of analyses were made where a cost-benefit analysis of adding additional routes to the existing solution.  Accordingly, an analysis was run on the existing graph to calculate its total benefit, providing a baseline $B_b$.  Then for each unused edge $i$, the analysis was run again with the unused edge added to the graph, for benefit $B_i$.  The difference between the benefit with the new edge and that of the baseline was calculated, and the ratio $r_i$ of that benefit added by the new edge and the associated cost $c_i$ of adding the new edge for a value representing the cost-benefit ratio $CBR_i$:
+
+\begin{equation*}\left( B_b - B_i \right) / c_i = CBR_i \end{equation*} 
+
+The edge with the greatest cost-benefit ratio is selected and compared against a threshold value (determined depemding how benefit is calculated).  If the cost-benefit ratio is above the threshold value, the edge is added to the graph.  This process repeats until there is no advantage gained by adding additional edges to the graph. (Figure~\ref{code3})
+
+\begin{figure}[!hbp] 
+    \begin{Verbatim}[frame=single] 
+UNUSED_EDGES[] = [indices of edges in EDGE_LIST disjoint from GRAPH_EDGES] 
+EXPAND = True 
+while(EXPAND) {
+    BASELINE = baseline benefit of GRAPH 
+    CBR_LIST[] = [] 
+    MAX_CBR_INDEX = 0 
+    for EDGE in UNUSED_EDGES[] {
+        BENEFIT = benefit of GRAPH + EDGE 
+        append ((BENEFIT - BASELINE) / EDGE_LENGTH[EDGE]) to CBR_LIST[]
+        if CBR_LIST[EDGE] > CBR_LIST[MAX_CBR_INDEX] then MAX_CBR_INDEX = EDGE 
+    }
+    if CBR_LIST[MAX_CBR_INDEX] > THRESHOLD {
+        V1, V2 = vertices of MAX_CBR_INDEX
+        append V2 to GRAPHS[V1][] 
+        append V1 to GRAPHS[V2][] 
+        append MAX_CBR_INDEX to GRAPH_EDGES[] 
+        remove MAX_CBR_INDEX from UNUSED_EDGES[]
+    } else {
+        EXPAND = False 
+    }
+}
+    \end{Verbatim} 
+    \caption[Programming expanded graph]{Pseudocode representing how the graph was expanded upon by cost-benefit analysis.} 
+    \label{code3} 
+\end{figure} 
+
+How the benefit of the graph is calculated is dependent upon various factors, many of which are beyond the scope of this model.  Typically, cost-benefit analyses of road patterns are heavily dependent upon traffic patterns.  The advantages of extending roads or the time and fuel saved by the system of roads for users are the most important factors, which in themselves are dependent upon supply-demand models.  These are balanced against construction and maintenance costs, the maintenance costs also being dependent upon traffic patterns.  There also may be significant, fixed social benefits or costs that may be determined by a constituency, and in this case an expanded system of bike lanes may be percieved as having a value beyond their actual use, by establishing a oommunity priority for a system of bike lanes for social, health, or environmental reasons.  However, quantifying these benefits requires feasability studies which are not yet available to this model.  One advantage to the proposed model is that it may easily be updated to incorporate a more sophisticated cost-benefit model should one become available at a later date.
+
+For immediate purposes, the costs of adding a bike lane are well established as being \textdollar 10,000 per mile.  We will try to extend this to an estimate of how bike lanes are valued, based on this value.  Extending a bike route to a station provides allows traffic to pass to and from that node, and that traffic is worth at least the cost the constructing the lane.  (This analysis is ignoring, for convenience, that there is some value in simply being connected to a system, and not the details of the system itself.)  We will use this to try to establish a proportion: 
+
+\begin{equation*} T \text{traffic} / \text{mile} = \text{\textdollar} 10000 / \text{mile} \end{equation*} 
+
+We will assume that traffic will be equally distributed amongst the stations.  From every node there is an equal amount of traffic, and that traffic is traveling in equal proportions to every other node.  Likewise, there is an equal amount of traffic traveling to the node, from every other node.  So there is some unit of bidirectional traffic $T_0$ such that, for $N$ number of stations, $T_0 \left( N - 1 \right) = T$.  For convenience, I will refer to one unit of traffic per mile $T_0$ as a "rider-mile".  So, considering the requirement that fifteen stations across the city be served, we arrive at: 
+
+\begin{equation*} 14 \text{rider-mile} = \$10,000 /\text{mile} \end{equation*} 
+
+We will consider this to be the threshold value of profitability.  If a mile of bike lane reduces the route of one unit of traffic by 14 miles, it will be worthwhile to add that bike lane.  
+
+This is admittedly a very rough estimate.  One immediate objection is that each station begins to have a constant marginal value when added to the system, so it becomes profitable to add 100 stations.  It is assumed that these calculations were factored into the initial selection of fifteen stations to the proposal requirements, and that there was a cost-benefit analysis before the request for proposal for specific routes was fielded.  We will adopt the 14 rider-mile threshold for the current proposal and suggest that future extensions of the system be preceded by more in-depth analysis based on traffic studies and constituency surveys.
+
+Having estimated a quantified unit of traffic and distance, we can analyze the benefits of each route.  To do so we considered every path between nodes.  Since we assumed that traffic is evenly distributed between nodes, the shortest path from station $i$ to station $j$, $r_{ij}$, is being traveled by one unit of traffic.  So for $N$ stations, we can quantify a graph of routes in rider-miles as follows: 
+
+\begin{equation*} \sum_{i = 1}^{N} \sum_{j = i}^{N} \text{length of} r_{ij} = \text{benefit} B \end{equation*} 
+
+The programming of this analysis is represented in Figure~\ref{code4}. 
+
+Finding the shortest path was accomplished by Dijkstra's algorithm.  It should be noted that while Dijkstra's algorithm is usually used to describe the shortest path, in this case we only need to discover the length of the shortest path.  Nodes were given a weight representing the distance from that node to the starting point, in this case by an indexed list.  Initial weights were given as infinity, with the exception of the starting node, which was set to an initial weight of zero.  Also, a set of unused nodes was created, off all nodes except the starting node.  A node marked as current, the node being examined at a particular stage of the algorithm, was initialized to be the starting node.  The algorithm was performed iteratively, as follows, 
+\begin{itemize} 
+    \item All of the nodes adjacent to the current node are considered.  If they are not in the unvisited set, ignore them.  If the examined node is in the unvisited set, calculate the weight of the current node and add the weight of the edge from the current to examined node.  This is the distance of a path from the starting node to the examined node.  If this distance is less than the examined node's weight, assign the distance as the new weight of the examined node.  This is repeated for every node adjacent to the current node.
+    \item Search the set of unvisited nodes for the node of the least weight.  That node is assigned as the new current node, and is removed from the set of unused nodes.
+    \item If the current node is the destination, the shortest path has been found, and its distance is the weight of the current node.  Otherwise, repeat for another iteration of the algorithm.
+\end{itemize} 
+    
+\begin{figure}[!hbp] 
+    \begin{Verbatim} 
+MILEAGE = 0 
+for START from range from 0 to (length(GRAPH[]) - 1) {
+    for DESTINATION from range from START to length(GRAPH[]): {
+        MILEAGE = MILEAGE + => {
+            /* begin Dijkstra's algorithm */
+            WEIGHT_LIST[] = [INFINITY for range of length(GRAPH[]] 
+            WEIGHT_LIST[START] = 0 
+            UNUSED_SET = [(range of length[GRAPH[]) - START] 
+            CURRENT = START 
+            while(UNUSED_SET is not empty) { 
+                /* begin iteration */
+                for ADJACENT in GRAPH[CURRENT][] {
+                    if ADJACENT is in UNUSED_SET {
+                        DISTANCE = EDGE_LENGTH[edge from CURRENT to ADJACENT]
+                        DISTANCE = WEIGHT_LIST[CURRENT] + DISTANCE 
+                        if DISTANCE < WEIGHT_LIST[ADJACENT] {
+                            WEIGHT_LIST[ADJACENT] = DISTANCE 
+                        }
+                    }
+                }
+                CURRENT = minimum [WEIGH_LIST[NODE] for NODE in UNUSED_SET] 
+                if CURRENT == DESTINATION then return WEIGHT_LIST[DESTINATION]
+                else remove CURRENT from UNUSED_SET[]
+            }
+        }
+    }
+}
+    \end{Verbatim} 
+    \caption[Programming for rider-mile calculation]{Pseudocode representation for programming of the calculation of rider-mile quantity, using Dijkstra's algorithm.} 
+    \label{code5} 
+\end{figure} 
+
+Following this model, an optimized system of bike lanes was determined that expanded upon the minimal spanning tree for the benefit of riders and the community as a whole, while keeping costs down.
+
+\section{Mathematical Solution} 
+
+\begin{table}[!hbp] 
+    \begin{tabular}{l | *{15}{r}} 
+        \multicolumn{1}{c}{Station} & \multicolumn{15}{c}{Station Index} \\
+        \multicolumn{1}{c |}{Index}   & 1 & 2 & 3 & 4 & 5 & 6 & 7 & 8 & 9 & 10 & 11 & 12 & 13 & 14 & 15 \\
+        \hline 
+        1 & 0 & 2.8 & 4.9 & 5.4 & 6.5 & 9.9 & 10.5 & 5.5 & 10.2 & 2.8 & 4.5 & 3.8 & 4.3 & 6.4 & 3.8 \\
+        2 & 0 & 0 & 2.0 & 7.1 & 8.6 & 11.3 & 2.4 & 4.3 & 12.2 & 4.1 & 5.9 & 4.8 & 5.1 & 5.7 & 3.9 \\
+        3 & 0 & 0 & 0 & 9.2 & 10.6 & 13.4 & 4.4 & 5.3 & 14.3 & 6.2 & 7.9 & 7.3 & 7.5 & 8.3 & 5.7 \\
+        4 & 0 & 0 & 0 & 0 & 2.0 & 4.6 & 5.7 & 8.3 & 6.6 & 2.9 & 1.7 & 3.0 & 3.9 & 8.7 & 6.8 \\
+        5 & 0 & 0 & 0 & 0 & 0 & 2.6 & 6.8 & 11.0 & 8.1 & 5.0 & 3.7 & 4.7 & 5.7 & 10.6 & 8.3 \\
+        6 & 0 & 0 & 0 & 0 & 0 & 0 & 10.2 & 13.2 & 9.5 & 7.5 & 6.4 & 7.5 & 8.4 & 13.4 & 11.5 \\
+        7 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 5.1 & 11.8 & 3.2 & 5.3 & 4.3 & 4.9 & 6.1 & 3.8 \\
+        8 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 12.8 & 6.1 & 6.9 & 5.7 & 5.6 & 4.2 & 2.7 \\
+        9 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 9.6 & 6.6 & 7.7 & 8.6 & 13.1 & 11.3 \\
+        10 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1.7 & 1.0 & 2.0 & 6.8 & 4.3 \\
+        11 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1.0 & 1.9 & 6.7 & 4.6 \\
+        12 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 1.0 & 5.9 & 3.4 \\
+        13 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 4.8 & 3.4 \\
+        14 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 3.2 \\
+        15 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 & 0 \\
+    \end{tabular} 
+\end{table} 
+
+\end{document} 
