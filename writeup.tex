@@ -1,5 +1,30 @@
+\usepackage{fancyvrb}
+
+\begin{document}
+
 \section{Mathematical Model} 
 
-The system of stations linked by bike paths is considered as a graph, where the stations are represented by nodes.  The bike paths linking them are considered as weighted edges, with the weight corresponding to their length or cost, which are directly proportional.  
+The system of stations linked by bike paths is considered as a network graph, where the stations are represented by nodes.  The bike paths linking them are considered as weighted edges, with the weight corresponding to their length or cost, which are directly proportional.  To have the greatest efficiency, the sum of weights of edges should be as low as possible while the benefits of the system of bike paths should be as high as possible.  Reconciling these objectives is the goal of the model.
 
-It is stipulated that all bus stops must be served by the system of bike paths, and so the graph must be spanning.  Likewise, it is not necessary that every two stations have a distinct, unique bike lane serving them, and so it is not necessary that the graph be a network.  So the ideal graph should include a minimum spanning tree as a subgraph and potentially 
+For computation, a distance matrix (Figure~/ref{distance_matrix}) was constructed, indexed by station, where each element was the distance of the optimal route between the two stations.  As it is a symmetrical matrix, if a route was identical to that of a previous row (e.g. element $(j, i)$ following $(i, j)$) it was omitted as represted by zero in the figure.  This was converted to one-dimensional list for convenience in programming.  Optimal routes were found using Google Maps, with the caveat that optimal routes were not always the shortest route by linear distance, but often took factors such as elevation changes into account.  This was considered to be optimal for the circumstances.  The graph itself was programmed as a list indexed by The coding is shown in Figure~\ref{code1}.
+
+\begin{figure}[!hbp]
+	\begin{Verbatim}[frame=single] 
+	DISTANCE_MATRIX = [[0, r0,1, r0,2, r0,3, r0,4, . . . , r0,14], 
+					   [0,    0, r1,2, r1,3, r1,4, . . . , r1,14], 
+					   [0,    0,    0, r2,3, r2,4, . . . , r2,14], 
+					   . . . 
+					   [0,    0,    0,    0,  . . . ,  0, r13,14], 
+					   [0,    0,    0,    0,  . . . ,  0,      0]]
+					   
+	EDGE_LIST => {
+		iterate over rows: 
+			iterate over columns: 
+				append element of DISTANCE_MATRIX to list
+		}
+	\end{Verbatim} 
+	\caption[Programming edge data]{Psudocode representing how the edge data was programmed into the computer model.}
+	\label{code1} 
+	\end{figure} 	
+
+It is stipulated that all bus stops must be served by the system of bike paths, and so the graph must be spanning.  Likewise, it is not necessary that every two stations have a distinct, unique bike lane serving them, and so it is not necessary that the graph be complete.  So the ideal graph should be a subset of the complete graph, and a minimum spanning tree would be a subset of the ideal graph.
